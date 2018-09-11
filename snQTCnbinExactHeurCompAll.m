@@ -1,0 +1,2 @@
+snQTCnbinExactHeurCompSporadicDemand;
+snQTCnbinExactHeurComp;
