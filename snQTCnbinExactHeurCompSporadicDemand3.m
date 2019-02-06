@@ -1,15 +1,14 @@
 % comparison between exact and heuristic determination of (r,nQ,T) policies 
 % itc20180910: file name used to be snQTCnbinCompSporadicDemand.new.txt
-fid = fopen('snQTCnbinCompSporadicDemand.new13.txt', 'wt');
+fid = fopen('snQTCnbinCompSporadicDemand.new12.txt', 'wt');
 
 L=1;
 %lamdas=[1 5 10 15 20 25 26 27 28 29 30 35 40];
-lamdas=[0.5];
+lamdas=[0.5 2.5];  % itc20181211: used to be 0.5
 pl=0.8;  % large variance
 epst=0.01;
 epsq=1;
 estop = 0;
-tmin = 0.0001;
 mint = 0;
 minq = 0;
 
@@ -19,9 +18,9 @@ fprintf(fid, '    Kr ,     Ko ,  lamda ,    h ,      p ,    s* ,    Q* ,    T* ,
 
 % Krs must be in descending order!
 %Krs=[1 0.1 0.05];
-Krs=[100 5 1]; %itc20181002: used to be array above
+Krs=[3 2 0]; %itc20181002: used to be array above
 Kr_len = numel(Krs);
-K0s=[1 5 25 100 1000];  % itc20181003: 1000 used not to be here
+K0s=[1 5 25 100];
 K0_len = numel(K0s);
 hs=[10 15 20];
 %hs=[1];
@@ -52,15 +51,26 @@ for j=1:K0_len
                 Kr=Krs(i);
                 for m=1:lamda_len
                     lamda=lamdas(m);
-                    disp(['computing exact (s,nQ,T) policies for m=' num2str(m)]);
+                    perdem = -lamda*pl/((1-pl)*log(1-pl));
+                    tmin = 0.01;
+                    if lamda>1
+                        tmin = 5/perdem;  % itc20181211: used to be 0.01
+                    end
+                    %disp(['computing exact (s,nQ,T) policies for m=' num2str(m)]);
+                    disp(['computing exact (s,nQ,T) policies for Kr=' num2str(Kr) ' K0=' num2str(K0) ' h=' num2str(h) ' p=' num2str(p)]);
                     tic;
                     [sopt Qopt Topt copt] = snQTCnbinOptFast3SD(minq, mint, Kr, K0, L, lamda, pl, h, p, epsq, epst, estop, tmin);
                     tEl=toc;
-                    disp(['computing heuristic (s,nQ,T) policies for m=' num2str(m)]);
+                    %disp(['computing heuristic (s,nQ,T) policies for m=' num2str(m)]);
+                    disp(['computing heuristic (s,nQ,T) policies for Kr=' num2str(Kr) ' K0=' num2str(K0) ' h=' num2str(h) ' p=' num2str(p)]);
                     tic;
-                    [s Q T c] = snQTCnbinOptFastApprox5(Kr,K0,L,lamda,pl,h,p,p2,tmin);
+                    [s Q T c] = snQTCnbinOptFastApprox13(Kr,K0,L,lamda,pl,h,p,epst,tmin);
                     tEl2=toc;
                     if c < copt  % quantization error
+                        disp([num2str(copt) '=copt>capprox=' num2str(c)]);
+                        if c + 1.e-2 < copt
+                            error('go fix this error');
+                        end
                         sopt=s;
                         Qopt=Q;
                         Topt=T;

@@ -1,43 +1,79 @@
-function y=snQTCnbin(s,Q,T,Kr,K0,L,lamda,p,h,phat)
-% (nQ,r,T) model in continuous time T
-% uses the Hadley-Whittin formulas 5-20, 5-22...24
-% 5-27...29, and 5-33.
-pm = 1- p;
-r = -lamda.*L./log(1-p);
-%P0 = lamda*T*nbincdf(Q-1,-lamda*T/log(1-p),pm)/Q + complnbincdf(Q+1,-lamda*T/log(1-p),pm);
-P0=porder(Q,T,lamda,p);
-ltdem = r.*(1-pm)./pm;  % mean lead-time demand
-%y1 = (Kr+K0*P0)./T + h*((Q+1)/2.0  + s - ltdem - lamda*T/2.0);
-% itc20181023: y1 used to be as above, but the last term doesn't capture 
-% period mean-demand
-perdem = -lamda.*T.*p/((1-p).*log(1-p));
-y1 = (Kr+K0.*P0)./T + h.*((Q+1)./2.0  + s - ltdem - perdem./2.0);
+L=1;
+lamda=0.5;
+p=0.8;
 
-% y = y1 + p*EP(s,Q,T,L,lamda) + h*BP(s,Q,T,L,lamda);
-B = (h+phat).*BP(s,Q,T,L,lamda,p);
-%disp(['y1=' num2str(y1) ' B=' num2str(B)]);
-y = y1 + B;
+Tmin=11;
+Tmax=12;
+epst = 0.1;
+Tlen = (Tmax-Tmin)/epst;
 
+s=6;
+Q=1;
+T=11.7;
+Ti=1:Tlen;
+BPi=1:Tlen;
+
+% ns=50;
+% Xi=1:ns;
+% IIPi=1:ns;
+% eps=T/ns;
+% for i=1:ns
+%     Xi(i)=L+eps*(i-1);
+%     IIPi(i)=IIP(i,lamda,p,s+Q);
+% end
+% hold on
+% plot(Xi,IIPi);
+% hold off
+
+% Xi=1:20;
+% IPi=1:20;
+% for i=1:20
+%     Xi(i)=i;
+%     IPi(i)=IP(T,L,lamda,p,i);
+% end
+% plot(Xi,IPi);
+
+% for i=1:Tlen
+%     T = Tmin+(i-1)*epst;
+%     Ti(i)=T;
+%     BPi(i)=BP(s,Q,T,L,lamda,p);
+% end
+% hold on
+% plot(Ti,BPi);
+% hold off
+
+% Qi=1:50;
+% mqi=1:50;
+% P0i=1:50;
+% diffi=1:50;
+% for i=1:50
+%     P0i(i)=porder(i,T,lamda,p);
+%     mqi(i)=min(-lamda*T*p/((1-p)*log(1-p)*i),1);
+%     diffi(i)=mqi(i)-P0i(i);
+% end
+% hold on
+% %plot(Qi,P0i,'k');
+% plot(Qi,diffi);
+% hold off
+% hold on
+% plot(Qi,mqi,'r');
+% hold off
+
+Xi=1:10;
+Bi=1:10;
+for i=1:10
+    ni = (i-1)*100+1;
+    Bi(i)=BP(s,Q,T,L,lamda,p,ni);
 end
+plot(Xi,Bi);
 
 
-function z = porder(Q,T,lamda,p)
-%pm = 1-p;
-z = 0;
-Qp = Q+1.e-9;
-for j=1:Qp
-    z = z+complnbincdf(j,-lamda.*T./log(1-p),p);  % itc20181002: last arg used to be pm, now is p
-end
-z = z./Q;
-end
-
-
-function z1=BP(s,Q,T,L,lamda,p)
+function z1=BP(s,Q,T,L,lamda,p,num_intvls)
 intgl = 0;
 sp1 = s+1;
 spQ = s+Q+1.e-9;  % itc20181209: added eps in right-end of sum
 for u=sp1:spQ
-    ipu = IP(T,L,lamda,p,u);
+    ipu = IP(T,L,lamda,p,u,num_intvls);
     %disp(['ipu(' num2str(u) ')=' num2str(ipu)]);  % itc: HERE rm asap
     intgl = intgl + ipu;
 end
@@ -45,15 +81,12 @@ z1 = intgl./(Q.*T);
 end
 
 
-% function z = IP(T,L,lamda,p,u)
-% z = quadgk(@(t) IIP(t,lamda,p,u), L, L+T, 'AbsTol', 1.e-12, 'RelTol', 0, 'MaxIntervalCount', 2000);  % itc20181209: integration params added
-% %z = quadvec(@(t) IIP(t,lamda,p,u), L, L+T);
-% end
-
-function z = IP(T,L,lamda,p,u)
+function z = IP(T,L,lamda,p,u, num_intvls)
 %z = quadgk(@(t) IIP(t,lamda,p,u), L, L+T, 'AbsTol', 1.e-12, 'RelTol', 0, 'MaxIntervalCount', 2000);  % itc20181209: integration params added
 % itc20181210: break the integration interval into many sub-intervals...
-num_intvls = 5;
+if nargin < 6
+    num_intvls = 5;
+end
 len = T/num_intvls;
 z=0;
 left=L;
@@ -96,3 +129,15 @@ pm = 1-p;
     y = 1.0 - nbincdf(x-1,r,pm);
 %end
 end
+
+
+function z = porder(Q,T,lamda,p)
+%pm = 1-p;
+z = 0;
+Qp = Q+1.e-9;
+for j=1:Qp
+    z = z+complnbincdf(j,-lamda.*T./log(1-p),p);  % itc20181002: last arg used to be pm, now is p
+end
+z = z./Q;
+end
+

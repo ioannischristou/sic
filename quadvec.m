@@ -20,6 +20,7 @@ function q = quadvec(f, varargin)
 %   ea-pi*a*b  % compare integration result to closed-form solution
   
     q = quadl(@g, varargin{:}); % like quadl, but supplies g as the argument
+    %q = integral(@g, varargin{:});
     function y = g(X) % make f into a "vectorized" function
         y = zeros(size(X));
         for i = 1:numel(X)

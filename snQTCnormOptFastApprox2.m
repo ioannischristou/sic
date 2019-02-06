@@ -13,7 +13,7 @@ if nargin < 8
     p2 = 0;
 end
 % mi*T-3sigma*sqrt(T)>=0 <=> sqrt(T)>=3sigma/mi
-Tmin = (3*sigma/mi)^2;
+Tmin = (3.5*sigma/mi)^2;
 
 T0 = 1;
 if T0<Tmin

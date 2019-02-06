@@ -29,6 +29,11 @@ T0=0.5;  % was T0=1;
 %options = optimset('MaxFunEvals',30000, 'TolFun', 0.002, 'MaxIter', 30000, 'TolX', 0.001);
 options = optimset('MaxFunEvals',10000, 'TolFun', 0.01, 'MaxIter', 10000, 'TolX', 0.01);
 
+%itc20181003: fix tmax in the face of high Kr
+if Kr>10
+    tmax=2.5;
+end
+
 [T1, fval1, exitflag] = fmincon(@(T) f1P(T, Kr, K0, L, lamda, pl, h, p, p2, epsq), T0, [], [], [], [], tmin, tmax, [], options);
 if exitflag <= 0
     error('optimization failed');
